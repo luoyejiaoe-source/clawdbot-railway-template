@@ -22,11 +22,22 @@ jobs:
           node-version: 22
 
       - name: Bump Dockerfile OPENCLAW_GIT_REF if needed
+        id: bump
         run: node scripts/bump-openclaw-ref.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check for changes
+        id: changed
+        run: |
+          if git diff --quiet; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create PR
+        if: steps.changed.outputs.no_changes == 'false'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
